@@ -42,14 +42,14 @@ def FetchAllVideos(driver):
 def SaveFetched_CSV(videos, path):
     videos.to_csv(path, sep=",", index = True)
 
-def Drive(channelurl):
+def Drive(channelurl, scrolls = 60):
     channelName = channelurl.split("/")[-2]
     
     if input_path / (channelName + ".csv") not in input_path.glob('**/*.csv'):
         driver = webdriver.Chrome(dr / "chromedriver")
         driver.get(channelurl)
         
-        ScrollToTheBottom(driver, 60)
+        ScrollToTheBottom(driver, scrolls)
         
         videos = FetchAllVideos(driver)
         
@@ -94,15 +94,22 @@ def DownloadAudio(i, csv, output, minDuration = 60, maxDuration = 600):
             
 def DownloadAll():
     for csvFile in input_path.glob('**/*.csv'):
+    
         channelName = csvFile.stem
-        csv = pd.read_csv(csvFile)
-        print(channelName, "total videos: " + str(len(csv["Title"])))
-
-        for i in range(len(csv["Title"])):
-            DownloadAudio(i, csv, output_path / channelName, 60, 1200)
         
-        SaveDownloaded_CSV(downloadedList, channelName)
-        
+        print(Path(output_path/channelName))
+        if Path(output_path/channelName).is_dir() == False:
+            
+            csv = pd.read_csv(csvFile)
+            print(channelName, "total videos: " + str(len(csv["Title"])))
+    
+            for i in range(len(csv["Title"])):
+                DownloadAudio(i, csv, output_path / channelName, 60, 1200)
+            
+            SaveDownloaded_CSV(downloadedList, channelName)
+        else:
+            print(channelName, "already downloaded.")
+            
     print("\nDone.")  
     
 #Drive("https://www.youtube.com/channel/UCl8iwAEa4i5LsFMXbiI2J-g/videos") #Ninety9Lives
@@ -110,7 +117,6 @@ def DownloadAll():
 #Drive("https://www.youtube.com/user/MonstercatMedia/videos") #Monstercat uncaged
 #Drive("https://www.youtube.com/user/MrGbullet/videos") #Japan Step
 #Drive("https://www.youtube.com/user/DESTINY681/videos") #J-CORE
-#Drive("https://www.youtube.com/user/Fixtmusic/videos") #FIXT
 #Drive("https://www.youtube.com/channel/UCUVCey_IfNryc9wDiZd3I3w/videos") #RhythmGameMusic
 #Drive("https://www.youtube.com/user/Liquicity/videos") #Liquicity
 #Drive("https://www.youtube.com/user/djzardonic/videos?view=0&sort=dd&shelf_id=0") #Zardonic
@@ -119,8 +125,8 @@ def DownloadAll():
 #Drive("https://www.youtube.com/user/FunkyyPanda/videos") #FunkyPanda
 #Drive("https://www.youtube.com/channel/UCSNHkzchuSim4nDdQf3jcvA/videos") #Community released mixes
 #Drive("https://www.youtube.com/c/NoCopyrightSounds/videos")
-
-Drive("https://www.youtube.com/user/KannibalenRecords/videos")
+#Drive("https://www.youtube.com/user/KannibalenRecords/videos")
+Drive("https://www.youtube.com/user/Fixtmusic/videos", scrolls = 60) #FIXT
 
 DownloadAll()
 
