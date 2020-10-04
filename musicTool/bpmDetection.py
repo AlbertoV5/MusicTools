@@ -6,7 +6,7 @@ Reads source-separated drums.wav and gives back bpm and note onsets
 @author: albertovaldezquinto
 """
 
-from dspTools import onset
+import onset
 from pathlib import Path
 import pandas as pd
 import os
