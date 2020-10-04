@@ -8,21 +8,10 @@ import scipy
 import matplotlib.pyplot as plt
 from scipy.io import wavfile
 import scipy.fftpack as fftpk
-from pydub import AudioSegment
-import os
 
-def toWAV(mp3):
-    wav = mp3.split(".")[0] + ".wav"
-    sound = AudioSegment.from_mp3(mp3)
-    sound.export(wav, format="wav")
-    return wav
 
 class Song():
     def __init__(self, songName, start_sec = 0, end_sec = 0):
-        clear = False
-        if ".mp3" in songName:
-            songName = toWAV(songName)
-            clear = True
             
         #print("Reading audio file...")
         audiofile = wavfile.read(songName)
@@ -41,8 +30,6 @@ class Song():
         if end_sec != 0:
             self.data = self.data[int(start_sec * self.sampfreq):int(end_sec * self.sampfreq)]
             
-        if clear:
-            os.remove(songName)
         
     def GetRMS(self): # decibels
         rms = 20*np.log10((np.mean(np.absolute(self.data))))
@@ -142,7 +129,7 @@ class Song():
     
     def CalculateThreshold_RMS(self):
         self.rms = GetRMS(self.data)
-        floor = -48
+        floor = -96
         tr = 1 - (self.rms/floor)
         #print("Suggested ratio is: " + str(tr))
         return int(tr * 10000)/10000
@@ -252,16 +239,21 @@ def Get_Threshold(data, chunk_size, ratio, HPF, LPF, sampfreq):
 
     
 def GetRMS(part):
-    rms = 20*np.log10((np.mean(np.absolute(part)) + 0.0001))
+    rms_ = np.sqrt(np.mean(np.square(part)))
+    rms = 20*np.log10(rms_ + 0.000001)
     #print("RMS is: " + str(rms) + " dB")
-    return rms
+    return int(rms*100)/100
 
 def CalculateThreshold_RMS(data):
     rms = GetRMS(data)
-    floor = -96
+    floor = -48
     tr = 1 - (rms/floor)
     #print("Suggested ratio is: " + str(tr))
     return int(tr * 10000)/10000
+
+
+def GetOffset(data, tr):
+    return min(np.where(data > tr))
 
 
 def mode(List):  #most frequent
