@@ -38,6 +38,9 @@ def FetchAllVideos(driver):
             urlList.append(url)
 
     return pd.DataFrame({"Title":titleList, "Url":urlList})
+    
+def SaveFetched_CSV(videos, path):
+    videos.to_csv(path, sep=",", index = True)
 
 def Drive(channelurl):
     channelName = channelurl.split("/")[-2]
@@ -49,37 +52,46 @@ def Drive(channelurl):
         ScrollToTheBottom(driver, 60)
         
         videos = FetchAllVideos(driver)
-        videos.to_csv(input_path / (channelName + ".csv"), sep=",", index = True)
-
+        
+        SaveFetched_CSV(videos, input_path / (channelName + ".csv"))
+        
     
 ''' DOWNLOADING FUNCTIONS '''
 
-def SaveDownloaded(downloadedList, channelName):
-    df = pd.DataFrame({"Title":[i[0] for i in downloadedList], "Status":[i[1] for i in downloadedList], "Url":[i[2] for i in downloadedList]})
+def SaveDownloaded_CSV(downloadedList, channelName):
+    df = pd.DataFrame({"Title":[i[0] for i in downloadedList], 
+                       "Status":[i[1] for i in downloadedList], 
+                       "Length":[i[2] for i in downloadedList], 
+                       "Url":[i[3] for i in downloadedList]})
+    
     df.to_csv(output_path / (channelName + ".csv"), sep=",", index = True)
+
 
 def DownloadAudio(i, csv, output, minDuration = 60, maxDuration = 600):
     while True:
         try:
-            url = csv["Url"][i]
+            url, video_title = csv["Url"][i], csv["Title"][i]
             yt = YouTube(url)
-            video_title = csv["Title"][i]
             
-            if yt.length < maxDuration and yt.length > minDuration: #lenght in seconds, 1 min to 10 min
-                print(i, "Downloaded:", video_title)
+            if yt.length < maxDuration and yt.length > minDuration: #lenght in seconds
                 yt.streams.filter(only_audio=True)[0].download(output, video_title)
-                downloadedList.append([video_title, "Downloaded", url])
+                downloadedList.append([video_title, "Downloaded", yt.length, url])
+                print(i, "Downloaded:", video_title)
             else:
                 print(i, "Not Downloaded:", video_title + " is too long or too short", yt.length/60, "minutes long.")
-                downloadedList.append([video_title, "Not Downloaded", url])
+                downloadedList.append([video_title, "Not Downloaded", yt.length, url])
 
             print("--------------------")
             return True
+        
+        except KeyError:
+            print("Pytube error", "https://github.com/nficano/pytube/issues/652")
+            break
+            
         except:
             print("Pytube error. Re-trying...")
             
-        
-
+            
 def DownloadAll():
     for csvFile in input_path.glob('**/*.csv'):
         channelName = csvFile.stem
@@ -87,9 +99,9 @@ def DownloadAll():
         print(channelName, "total videos: " + str(len(csv["Title"])))
 
         for i in range(len(csv["Title"])):
-            DownloadAudio(i, csv, output_path / channelName, 60, 600)
+            DownloadAudio(i, csv, output_path / channelName, 60, 1200)
         
-        SaveDownloaded(downloadedList, channelName)
+        SaveDownloaded_CSV(downloadedList, channelName)
         
     print("\nDone.")  
     
