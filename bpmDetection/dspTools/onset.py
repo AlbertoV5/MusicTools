@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
+Does many dsp tasks, focused on note onsets for bpm detection
 """
 import numpy as np
 import scipy

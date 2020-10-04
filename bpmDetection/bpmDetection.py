@@ -6,14 +6,14 @@ Reads source-separated drums.wav and gives back bpm and note onsets
 @author: albertovaldezquinto
 """
 
-import onset
+from dspTools import onset
 from pathlib import Path
 import pandas as pd
 import os
 import numpy as np
 
 root = Path.cwd()
-input_path, peaksPath, stemName = root / "input", root / "peaks", "drums.wav"
+input_path, peaks_path, stemName = root / "input", root / "peaks", "drums.wav"
 
 def ReadSongs_GetBPMs():
     bpmList, nameList = [], []
@@ -48,7 +48,7 @@ def GetBPM(stem, peaks, bpmMin = 100, bpmMax = 300):
     return int(bpm*100)/100
 
 def SavePeaksAsNpy(fileName, peaksArray):
-    np.save(str(peaksPath / fileName), np.array(peaksArray), allow_pickle=True)
+    np.save(str(peaks_path / fileName), np.array(peaksArray), allow_pickle=True)
 
 def GetStemData(path):
     stem = onset.Song(path) #Read samples
