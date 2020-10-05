@@ -20,10 +20,13 @@ class Song():
         self.length = len(self.data) - self.peakAlphaIndex
         self.length_seconds = self.length / 44100
 
-        self.channels = len(self.data[0])
-        if self.channels == 2: # checks for stereo
-            self.data = np.add(self.data[:, [0]], self.data[:, [1]]) / self.channels
-            self.data = np.reshape(self.data, -1)
+        try:
+            self.channels = len(self.data[0])
+            if self.channels == 2: # checks for stereo
+                self.data = np.add(self.data[:, [0]], self.data[:, [1]]) / self.channels
+                self.data = np.reshape(self.data, -1)
+        except:
+            print("File is mono")
         #Normalize to 1 is max
         self.data = self.data * (1 / np.max(self.data))
 

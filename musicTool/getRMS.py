@@ -21,6 +21,14 @@ def Format(line):
 def Round(value):
     return int(value*(10**4))/(10**4)
 
+def PlotRMS(interpolatedArray, rmsMinPos, rmsMin, rmsMaxPos, rmsMax):
+    fig, ax = plt.subplots()
+    plt.grid(True)
+    ax.plot(interpolatedArray)
+    ax.scatter(rmsMinPos, rmsMin, c = "Green", marker = "X")
+    ax.scatter(rmsMaxPos, rmsMax, c = "Red", marker = "X")
+
+
 def ReadSong(filePath, title):
     # Read waveform to numpy array
     song = onset.Song(filePath)
@@ -63,11 +71,7 @@ def ReadSong(filePath, title):
     rmsMinPos, rmsMaxPos = np.argmin(interpolatedArray), np.argmax(interpolatedArray)
         
     # Plot
-    fig, ax = plt.subplots()
-    plt.grid(True)
-    ax.plot(interpolatedArray)
-    ax.scatter(rmsMinPos, rmsMin, c = "Green", marker = "X")
-    ax.scatter(rmsMaxPos, rmsMax, c = "Red", marker = "X")
+    #PlotRMS(interpolatedArray, rmsMinPos, rmsMin, rmsMaxPos, rmsMax)
     
     # Save Dictionary
     data = {"Title":[title], "RMS Mean (dB)": [Round(rmsAvg)], "RMS Total (dB)": [Round(rmsTotal)], 
@@ -81,9 +85,8 @@ def ReadSong(filePath, title):
     print("--------------------\n")
     
     df = pd.DataFrame(data)
-    df.to_csv('songs.csv', mode='a', header=False, index = False)
+    df.to_csv('_data.csv', mode='a', header=False, index = False)
 
-    
 
 def ReadAllSongs():
     dictionary = {"Title":[], "RMS Mean (dB)": [], "RMS Total (dB)": [], 
@@ -91,7 +94,7 @@ def ReadAllSongs():
                   "Endset (sec)": [], "Length (sec)": []}
 
     df = pd.DataFrame(dictionary)
-    df.to_csv('songs.csv', index = False)
+    df.to_csv('_data.csv', index = False)
     
     for file in wavFileList:
         ReadSong(str(input_path / (file + '.wav')), file)
@@ -100,9 +103,6 @@ def ReadAllSongs():
 wavFileList = [file.stem for file in input_path.glob('**/*.wav')]
 
 ReadAllSongs()
-
-
-
 
 
 
