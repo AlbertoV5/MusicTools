@@ -10,9 +10,9 @@ import pandas as pd
 from pytube import YouTube
 from pathlib import Path
 
-csvFile = "Top of the Week_Month - BeatSaber_All (Weekly).csv"
+csvFile = Path.cwd() / "input" / "Top10.csv"
 csv = pd.read_csv(csvFile)
-download_path = Path.cwd() / "downloads"
+download_path = Path.cwd() / "output"
 
 def Get_Genres_Filtered(csv, top = 10, weeks = (0,len(csv))):
     
@@ -74,5 +74,5 @@ def DownloadSongs(csv, weeks = (0,len(csv))):
 
 genF, subF = Get_Genres_Filtered(csv, 20)
 
-#DownloadSongs(csv)
+DownloadSongs(csv)
 

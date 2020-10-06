@@ -83,7 +83,7 @@ def ReadSong(filePath, title):
     endsetSeconds = endset / song.sampfreq
 
     # Prepare values for interpolation
-    interpolationLength = 256
+    interpolationLength = 128
     interpolationRatio = num_of_frames/interpolationLength
     
     # Interpolation of array in order to compare
