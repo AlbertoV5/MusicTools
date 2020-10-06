@@ -33,11 +33,6 @@ class Song():
         if end_sec != 0:
             self.data = self.data[int(start_sec * self.sampfreq):int(end_sec * self.sampfreq)]
             
-        
-    def GetRMS(self): # decibels
-        rms = 20*np.log10((np.mean(np.absolute(self.data))))
-        return int(rms*100)/100
-
     def FindAlphaPeak(self, start = 0, ratio = 0.8):
         # MAKE SURE THE DATA IS NORMALIZED SO RATIO = THRESHOLD
         for i in range(len(self.data)):
@@ -241,7 +236,7 @@ def Get_Threshold(data, chunk_size, ratio, HPF, LPF, sampfreq):
     
 
     
-def GetRMS(part):
+def GetRMS_dB(part):
     rms_ = np.sqrt(np.mean(np.square(part)))
     rms = 20*np.log10(rms_ + 0.000001)
     #print("RMS is: " + str(rms) + " dB")
@@ -253,7 +248,7 @@ def GetRMS_Simple(part):
     return int(rms_*100)/100
 
 def CalculateThreshold_RMS(data):
-    rms = GetRMS(data)
+    rms = GetRMS_dB(data)
     floor = -48
     tr = 1 - (rms/floor)
     #print("Suggested ratio is: " + str(tr))
