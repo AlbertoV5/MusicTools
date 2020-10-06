@@ -14,6 +14,7 @@ import numpy as np
 
 dr = Path.cwd()
 input_path, output_path = dr / "input", dr / "output"
+framesArray_path = output_path / "_framesArrays"
 
 def Format(line):
     return format(line, ".4f")
@@ -21,13 +22,17 @@ def Format(line):
 def Round(value):
     return int(value*(10**4))/(10**4)
 
-def PlotRMS(interpolatedArray, rmsMinPos, rmsMin, rmsMaxPos, rmsMax):
+def PlotRMS(interpolatedArray, rmsMinPos, rmsMin, rmsMaxPos, rmsMax, title, length):
     fig, ax = plt.subplots()
     plt.grid(True)
     ax.plot(interpolatedArray)
+    ax.set_ylim((-60,0))
+    ax.set_xlim((-1,128))
     ax.scatter(rmsMinPos, rmsMin, c = "Green", marker = "X")
     ax.scatter(rmsMaxPos, rmsMax, c = "Red", marker = "X")
-
+    ax.set_title(title)
+    fig.savefig(output_path / (title + ".png"))
+    plt.close(fig)
 
 def ReadSong(filePath, title):
     # Read waveform to numpy array
@@ -40,21 +45,26 @@ def ReadSong(filePath, title):
     offset = np.where(song.data > threshold)[0][0]
     offsetSeconds = offset / song.sampfreq
     
-    # Get frame information
+    # Prepare values for frames
     songLength = song.data.shape[0] - offset
     frameLength = 2048
     num_of_frames = songLength // frameLength
         
-    # List Comprehension of all the rms for all the frames in the song
-    rmsArray = np.array([onset.GetRMS(song.data[(offset + (frame*frameLength)):(offset + (frame * frameLength) + frameLength)]) 
+    # List Comprehension for all the frames in the song, get RMS
+    rmsArray = np.array([onset.GetRMS(song.data[(frame*frameLength):((frame * frameLength) + frameLength)]) 
                         for frame in range(num_of_frames)])
     
-    # Get Song End, endset as the last frame where rms > gateThreshold
+    # Prepare values for finding quiet frames / silence
     gateThreshold = -72
+    gateHoldTime = 20
     try:
-        endFrame = np.where(rmsArray < gateThreshold)[0][0]
-        rmsArray = rmsArray[:endFrame]
+        # Find all frames with low rms (silence), find all the indexes where silence is longer than X frames and grab the last occurence
+        quietFrames = np.where(rmsArray < gateThreshold)
+        splitIndexes = np.where(np.diff(quietFrames) > gateHoldTime)[0] + 1
+        endFrame = np.split(quietFrames, splitIndexes)[-1][0]    
         endset = endFrame * frameLength
+        # Only use data before endFrame
+        rmsArray = rmsArray[:endFrame]
     except:
         endset = songLength
     endsetSeconds = endset / song.sampfreq
@@ -65,27 +75,29 @@ def ReadSong(filePath, title):
     interpolatedArray = np.interp(np.arange(0, len(rmsArray), interpolationRatio), np.arange(0, len(rmsArray)), rmsArray)
 
     # RMS Values, total and interpolated
-    rmsTotal = onset.GetRMS(song.data)
+    rmsTotal = onset.GetRMS(song.data[offset:endset])
     rmsAvg = np.average(interpolatedArray)
     rmsMin, rmsMax = Round(np.min(interpolatedArray)), Round(np.max(interpolatedArray))
     rmsMinPos, rmsMaxPos = np.argmin(interpolatedArray), np.argmax(interpolatedArray)
         
     # Plot
-    #PlotRMS(interpolatedArray, rmsMinPos, rmsMin, rmsMaxPos, rmsMax)
+    PlotRMS(interpolatedArray, rmsMinPos, rmsMin, rmsMaxPos, rmsMax, title, Round(baseLength))
+    # Save numpy array of rms frames
+    np.save(str(framesArray_path / (title + ".npy")), interpolatedArray, allow_pickle=True)
     
     # Save Dictionary
-    data = {"Title":[title], "RMS Mean (dB)": [Round(rmsAvg)], "RMS Total (dB)": [Round(rmsTotal)], 
+    dictionary = {"Title":[title], "RMS Mean (dB)": [Round(rmsAvg)], "RMS Total (dB)": [Round(rmsTotal)], 
             "RMS Min (dB)": [(Round(rmsMinPos), Round(rmsMin))], "RMS Max (dB)": [(Round(rmsMaxPos), Round(rmsMax))],
             "Offset (sec)": [Round(offsetSeconds)], "Endset (sec)": [Round(endsetSeconds)],
-            "Base Length (sec)": [Round(baseLength)]}
+            "Length (sec)": [Round(endset-offset)]}
     
     # Print out
-    for parameter in data.keys():
-        print(parameter, ":", data[parameter][0]) 
+    for parameter in dictionary.keys():
+        print(parameter, ":", dictionary[parameter][0]) 
     print("--------------------\n")
     
-    df = pd.DataFrame(data)
-    df.to_csv('_data.csv', mode='a', header=False, index = False)
+    df = pd.DataFrame(dictionary)
+    df.to_csv('outputData.csv', mode='a', header=False, index = False)
 
 
 def ReadAllSongs():
@@ -94,7 +106,7 @@ def ReadAllSongs():
                   "Endset (sec)": [], "Length (sec)": []}
 
     df = pd.DataFrame(dictionary)
-    df.to_csv('_data.csv', index = False)
+    df.to_csv('outputData.csv', index = False)
     
     for file in wavFileList:
         ReadSong(str(input_path / (file + '.wav')), file)

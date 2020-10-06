@@ -247,6 +247,11 @@ def GetRMS(part):
     #print("RMS is: " + str(rms) + " dB")
     return int(rms*100)/100
 
+def GetRMS_Simple(part):
+    rms_ = np.sqrt(np.mean(np.square(part)))
+    #print("RMS is: " + str(rms) + " dB")
+    return int(rms_*100)/100
+
 def CalculateThreshold_RMS(data):
     rms = GetRMS(data)
     floor = -48
@@ -255,8 +260,6 @@ def CalculateThreshold_RMS(data):
     return int(tr * 10000)/10000
 
 
-def GetOffset(data, tr):
-    return min(np.where(data > tr))
 
 
 def mode(List):  #most frequent
