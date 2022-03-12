@@ -8,4 +8,4 @@ Collection of tools for data scraping, source separation and digital signal proc
 3. Music Tool:
   - Use getRMS.py to store loudness arrays, downsampled, to a .npy file. Batch it.
   - Use compareRMS.py to compare one array to the rest and find the most similar one based on dot product.
-  - To do: Replace compare with clustering for better results.
+  - To do: Replace comparing arrays with dot product to compareing with clustering for better results.
